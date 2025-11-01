@@ -1,0 +1,63 @@
+query: |
+  {query_type}
+
+sinks:
+  - name: sink
+    type: File
+    schema:
+      - name: id
+        type: UINT64
+      - name: value1
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+    config:
+      input_format: CSV
+      file_path: "result.csv"
+      append: false
+
+logical:
+  - name: stream1
+    schema:
+      - name: id1
+        type: UINT64
+      - name: value1
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+
+  - name: stream2
+    schema:
+      - name: id2
+        type: UINT64
+      - name: value2
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+
+physical:
+  - logical: stream1
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 {rows} 1
+        SEQUENCE UINT64 0 99 1
+        SEQUENCE UINT64 0 100 1
+
+  - logical: stream2
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 {rows} 1
+        SEQUENCE UINT64 0 1000 1
+        SEQUENCE UINT64 0 100 1

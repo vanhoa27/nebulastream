@@ -1,0 +1,36 @@
+query: |
+  {query_type} 
+
+sinks:
+  - name: sink
+    type: File
+    schema:
+      - name: source$x
+        type: UINT64
+      - name: source$y
+        type: UINT64
+    config:
+      input_format: CSV
+      file_path: "result.csv"
+      append: false
+
+logical:
+  - name: source
+    schema:
+      - name: x
+        type: UINT64
+      - name: y
+        type: UINT64
+
+physical:
+  - logical: source
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 {rows} 1
+        SEQUENCE UINT64 0 100 1
