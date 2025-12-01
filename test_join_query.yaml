@@ -1,0 +1,71 @@
+query: |
+  SELECT stream1.id1 AS id,
+         stream1.value1 AS value1,
+         stream1.timestamp AS timestamp
+  FROM (SELECT * FROM stream1)
+  INNER JOIN 
+  (SELECT * FROM stream2)
+  ON (id1 = id2 and value1 = value2)
+  WINDOW TUMBLING(timestamp, SIZE 100 MS)
+  INTO sink
+
+sinks:
+  - name: sink
+    type: File
+    schema:
+      - name: id
+        type: UINT64
+      - name: value1
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+    config:
+      input_format: CSV
+      file_path: "result.csv"
+      append: false
+
+logical:
+  - name: stream1
+    schema:
+      - name: id1
+        type: UINT64
+      - name: value1
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+
+  - name: stream2
+    schema:
+      - name: id2
+        type: UINT64
+      - name: value2
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+
+physical:
+  - logical: stream1
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 1000 1
+        SEQUENCE UINT64 0 99 1
+        SEQUENCE UINT64 0 100 1
+
+  - logical: stream2
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 1000 1
+        SEQUENCE UINT64 0 1000 1
+        SEQUENCE UINT64 0 100 1
